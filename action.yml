@@ -1,0 +1,21 @@
+name: 'Bitbar Testing'
+description: 'This action is to upload android and ios application to bitbar cloud and get testing result by starting bitbar testing.'
+inputs:
+  bitbar-api-key: 
+    description: "API Key to Bitbar account"
+    required: true
+  testing-folder:
+    description: "Folder name or relative path from root project for bitbar appium testing"
+    required: true
+  application:
+    description: "binary application for testing"
+    required: true
+  type:
+    description: "iOS | Android"
+    required: true
+outputs:
+  response:
+    description: 'Testing Result'
+runs:
+  using: 'node12'
+  main: 'index.js'
