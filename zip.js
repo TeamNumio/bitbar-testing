@@ -14,7 +14,7 @@ const makeZipOfTestingContent = (testingFolder) => {
                 files.forEach(function (file) {
                     const filePath = path.join(directoryPath, file);
                     if (fs.statSync(filePath).isDirectory()) {
-                        zip.addLocalFolder(filePath);
+                        zip.addLocalFolder(filePath, `./${file}`);
                     } else if (fs.statSync(filePath).isSymbolicLink()) {
                     } else if (fs.statSync(filePath).isFile) {
                         zip.addLocalFile(filePath);

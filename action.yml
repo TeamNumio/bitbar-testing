@@ -13,9 +13,15 @@ inputs:
   type:
     description: "iOS | Android"
     required: true
+  project-id:
+    description: "Provide a project id for testing"
+    required: true
+  device-group-id:
+    description: "group id of devices for testing"
+    required: true
 outputs:
   response:
     description: 'Testing Result'
 runs:
   using: 'node12'
-  main: 'index.js'
+  main: 'dist/index.js'
