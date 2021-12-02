@@ -124,9 +124,72 @@ const startBitbarTesting = (
     })
 }
 
+const getTestingContent = (projectId, testId, auth) => {
+    console.log("auth", auth)
+    return new Promise(async (resolve, reject) => {
+        if (!projectId || !testId) reject("Invalid request");
+        try {
+            const axiosInstance = axios.default.create({
+                baseURL: `https://cloud.bitbar.com/api/me/projects/${projectId}/runs/${testId}`,
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const response = await axiosInstance.request({
+                auth,
+                method: 'get'
+            });
+            resolve(response.data);
+        } catch (error) {
+            reject(error);
+        }
+    })
+}
+
+const hasChangeInResponse = (current, previous) => {
+    if (!previous)  return true;
+    if (current.state !== previous.state) return true;
+
+    if (current.testCaseCount !== previous.testCaseCount)   return true;
+    if (current.executedTestCaseCount !== previous.executedTestCaseCount)   return true;
+    if (current.successfulTestCaseCount !== previous.successfulTestCaseCount)   return true;
+    if (current.failedTestCaseCount !== previous.failedTestCaseCount)   return true;
+    return false;
+}
+
+const waitToFinishTesting = (projectId, testId, timeout, auth, progressCallback) => {
+    return new Promise((resolve, reject) => {
+        var counter = 0;
+        var previousResult = null;
+        const interval = setInterval(async () => {
+            counter += 10;
+            if (counter > timeout) {
+                clearInterval(interval);
+                reject("Timeout.")
+            } else {
+                try {
+                    const content = await getTestingContent(projectId, testId, auth);
+                    if (progressCallback) {
+                        if (hasChangeInResponse(content, previousResult)) {
+                            progressCallback(content);
+                        }
+                    }
+                    if (content.state === 'FINISHED') {
+                        clearInterval(interval)
+                        resolve(content);
+                    }
+                } catch (error) {
+                    clearInterval(interval)
+                    reject(error);
+                }
+            }
+        }, 10000)
+    })
+}
+
 module.exports = {
     uploadingFile,
     getAvailableFrameworks,
     getFramework,
-    startBitbarTesting
+    startBitbarTesting,
+    waitToFinishTesting
 }

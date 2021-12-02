@@ -2,7 +2,8 @@ const { makeZipOfTestingContent } = require('./zip');
 const {
     uploadingFile,
     getFramework,
-    startBitbarTesting
+    startBitbarTesting,
+    waitToFinishTesting
 } = require('./bitbar')
 
 const getFrameworkNameByPlatform = (platform) => {
@@ -25,29 +26,31 @@ const startTesting = async (
             password: ""
         }
 
-        actions.debug("Zipping testing content...");
+        actions.info("Zipping testing content...");
         // make zip file with testing content(config & scripts)
         const zipFile = await makeZipOfTestingContent(testingFolder);
+        actions.info("zip file path is " + zipFile);
 
-        actions.debug("Uploading test zip file...");
+        actions.info("Uploading test zip file...");
         // upload the zip file to bitbar cloud
         const zipFileRes = await uploadingFile(zipFile, auth);
 
-        actions.debug("Uploading application binary file...");
+        actions.info("Uploading application binary file...");
         // upload binary application to bitbar cloud
         const appFileRes = await uploadingFile(binaryAppPath, auth);
 
-        actions.debug("Getting Appium Server Side Framework");
+        actions.info("Getting Appium Server Side Framework");
         // start testing with uploaded fiiles(zipFileRes & appFileRes)
         const framework = await getFramework(getFrameworkNameByPlatform(appPlatform), auth);
 
         if (!framework) {
             // failed & return
+            actions.setFailed("Error: framework is not specified.");
             return;
         }
 
-        actions.debug("Starting Bitbar testing...");
-        const res = await startBitbarTesting(
+        actions.info("Starting Bitbar testing...");
+        const test = await startBitbarTesting(
             auth,
             appPlatform,
             appFileRes.id,
@@ -56,11 +59,24 @@ const startTesting = async (
             framework.id,
             deviceGroupId
         )
-        actions.debug("Started Bitbar testing...\n" + JSON.stringify(res));
+        actions.info("Started Bitbar testing...");
+
+        const result = await waitToFinishTesting(
+            projectId,
+            test.id,
+            1800,   // unit is second
+            auth,
+            (testInfo) => {
+                if (testInfo.testCaseCount > 0) {
+                    actions.info(`Total/Executed: ${testInfo.testCaseCount}/${testInfo.executedTestCaseCount}, Successful/Failed: ${testInfo.successfulTestCaseCount}/${testInfo.failedTestCaseCount}`);
+                }
+            }
+        )
+
+        actions.setOutput("testingResult", result);
     } catch (error) {
         actions.setFailed("Error:" + JSON.stringify(error));
     }
-    // zip package of testing scripts
 }
 
 module.exports = { startTesting }

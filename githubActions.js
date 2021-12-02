@@ -9,6 +9,10 @@ class GithubActions {
     core.warning(message)
   }
 
+  info(message) {
+    core.info(message)
+  }
+
   setOutput(name, output) {
     core.setOutput(name, output)
   }

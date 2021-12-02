@@ -5,7 +5,12 @@ var AdmZip = require("adm-zip");
 const makeZipOfTestingContent = (testingFolder) => {
     return new Promise((resolve, reject) => {
         var zip = new AdmZip();
-        const directoryPath = path.join(__dirname, testingFolder);
+        let directoryPath;
+        if (path.isAbsolute(testingFolder)) {
+            directoryPath = testingFolder;
+        } else {
+            directoryPath = path.join(__dirname, testingFolder);
+        }
         fs.readdir(directoryPath, function (err, files) {
             //handling error
             if (err) {
@@ -23,8 +28,9 @@ const makeZipOfTestingContent = (testingFolder) => {
 
                 const now = new Date();
                 const zipFilename = `testing-${now.getTime()}.zip`;
-                zip.writeZip(path.join(__dirname, zipFilename));
-                resolve(zipFilename);
+                const zipFilePath = path.join(__dirname, zipFilename)
+                zip.writeZip(zipFilePath);
+                resolve(zipFilePath);
             }
         });
     });
